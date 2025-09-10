@@ -16,8 +16,8 @@ router.post("/", (req, res) => {
     res.json({ message: "Task created (mock)" });
 });
 
-// PUT /api/tasks/:id
-router.put("/:id", (req, res) => {
+// PATCH /api/tasks/:id
+router.patch("/:id", (req, res) => {
     res.json({ message: "Task updated (mock)" });
 });
 

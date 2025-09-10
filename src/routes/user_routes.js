@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
- // GET: /api/usre
+// GET: /api/user
 router.get("/", (req, res) => {
     res.json([{ id: 1, title: "List of users", status: "new" }]);
 });
@@ -17,7 +17,7 @@ router.post("/", (req, res) => {
 });
 
 //PATCH: /api/user/id
-router.put("/:id", (req, res) => {
+router.patch("/:id", (req, res) => {
     res.json({ message: "updated user" });
 });
 
