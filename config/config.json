@@ -1,0 +1,29 @@
+{
+  "development": {
+    "username": "root",
+    "password": "root",
+    "database": "tasks_tracker_dev",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "port": 3306,
+    "logging": true
+  },
+  "test": {
+    "username": "root",
+    "password": "password",
+    "database": "tasks_tracker_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "port": 3306,
+    "logging": false
+  },
+  "production": {
+    "username": "root",
+    "password": "password",
+    "database": "tasks_tracker_prod",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "port": 3306,
+    "logging": false
+  }
+}
