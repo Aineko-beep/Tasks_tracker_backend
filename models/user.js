@@ -4,7 +4,6 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
     class User extends Model {
         static associate(models) {
-            // Определение ассоциаций здесь
             User.hasMany(models.Task, {
                 foreignKey: 'userId',
                 as: 'tasks'
@@ -38,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
         sequelize,
         modelName: 'User',
         tableName: 'Users',
-        timestamps: true, // Автоматически добавляет created_at и updated_at
+        timestamps: true,
         createdAt: 'created_at',
         updatedAt: 'updated_at'
     });
