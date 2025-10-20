@@ -1,29 +1,21 @@
 const express = require("express");
 const router = express.Router();
+const taskController = require('../controllers/taskController');
+const authMiddleware = require('../middleware/authMiddleware');
 
 // GET /api/tasks
-router.get("/", (req, res) => {
-    res.json([{ id: 1, title: "Mock Task", status: "new" }]);
-});
+router.get("/", taskController.getTask);
 
 // GET /api/tasks/:id
-router.get("/:id", (req, res) => {
-    res.json({ id: req.params.id, title: "Mock Task", status: "done" });
-});
+router.get("/:id", taskController.getTaskId);
 
 // POST /api/tasks
-router.post("/", (req, res) => {
-    res.json({ message: "Task created (mock)" });
-});
+router.post("/",  taskController.postTask);
 
 // PATCH /api/tasks/:id
-router.patch("/:id", (req, res) => {
-    res.json({ message: "Task updated (mock)" });
-});
+router.patch("/:id",  taskController.patchTaskId);
 
 // DELETE /api/tasks/:id
-router.delete("/:id", (req, res) => {
-    res.json({ message: "Task deleted (mock)" });
-});
+router.delete("/:id", taskController.deleteTaskId);
 
 module.exports = router;

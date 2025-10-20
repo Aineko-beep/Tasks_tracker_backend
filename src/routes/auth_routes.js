@@ -1,33 +1,24 @@
 const express = require("express");
 const router = express.Router();
+const authController = require("../controllers/authController");
+const authMiddleware = require('../middleware/authMiddleware');
 
 // POST /api/auth/register
-router.post("/register", (req, res) => {
-    res.json({ message: "User is registered (mock)" });
-});
+router.post("/register", authController.postRegister);
 
 // POST /api/auth/login
-router.post("/login", (req, res) => {
-    res.json({ token: "mock-jwt-token" });
-});
+router.post("/login",authController.postLogin);
 
 // POST /api/auth/logout
-router.post("/logout", (req, res) => {
-    res.json({ message: "User is logged out (mock)" });
-});
+router.post("/logout", authController.postLogout);
 
 // GET /api/auth/me
-router.get("/me", (req, res) => {
-    res.json({ message: "User information is valid (mock)" });
-});
+router.get("/me",authController.getMe);
 
 // POST /auth/password/forgot
-router.post("/password/forgot", (req, res) => {
-    res.json({ message: "Password recovery email sent (mock)" });
-});
+router.post("/password/forgot", authController.postForgot);
+
 // POST /auth/password/reset
-router.post("/password/reset", (req, res) => {
-    res.json({ message: "Password reset (mock)" });
-});
+router.post("/password/reset", authController.postReset);
 
 module.exports = router;
