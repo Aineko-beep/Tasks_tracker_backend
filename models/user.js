@@ -25,6 +25,15 @@ module.exports = (sequelize, DataTypes) => {
                 isEmail: true
             }
         },
+        username: {
+            type: DataTypes.STRING(255),
+            allowNull: false,
+            unique: true
+        },
+        hashpassword: {
+            type: DataTypes.STRING(255),
+            allowNull: false
+        },
         recovery_code: {
             type: DataTypes.STRING(100),
             allowNull: true

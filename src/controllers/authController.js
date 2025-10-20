@@ -1,18 +1,24 @@
 const { User } = require('../../models');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_me';
 
 exports.register = async (req, res) => {
     try {
-        const { login } = req.body || {};
-        if (!login) return res.status(400).json({ error: 'Login is required' });
+        const { login, username, password } = req.body || {};
+        if (!login || !username || !password) return res.status(400).json({ error: 'Login, username and password are required' });
 
         const existingUser = await User.findOne({ where: { login } });
         if (existingUser) return res.status(400).json({ error: 'User with this login already exists' });
 
-        const user = await User.create({ login });
-        res.status(201).json({ message: 'User registered successfully', user: { id: user.id, login: user.login } });
+        const existingUsername = await User.findOne({ where: { username } });
+        if (existingUsername) return res.status(400).json({ error: 'Username already taken' });
+
+        const hash = bcrypt.hashSync(password, 10);
+
+        const user = await User.create({ login, username, hashpassword: hash });
+        res.status(201).json({ message: 'User registered successfully', user: { id: user.id, login: user.login, username: user.username } });
     } catch (error) {
         console.error('Registration error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -21,15 +27,18 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
     try {
-        const { login } = req.body;
-        if (!login) return res.status(400).json({ error: 'Login is required' });
+        const { login, password } = req.body;
+        if (!login || !password) return res.status(400).json({ error: 'Login and password are required' });
 
         const user = await User.findOne({ where: { login } });
         if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-        const token = jwt.sign({ id: user.id, login: user.login }, JWT_SECRET, { expiresIn: '7d' });
+        const valid = bcrypt.compareSync(password, user.hashpassword);
+        if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-        res.json({ message: 'Login successful', token, user: { id: user.id, login: user.login } });
+        const token = jwt.sign({ id: user.id, login: user.login, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
+
+        res.json({ message: 'Login successful', token, user: { id: user.id, login: user.login, username: user.username } });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ error: 'Internal server error' });
