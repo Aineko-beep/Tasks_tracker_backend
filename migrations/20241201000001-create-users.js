@@ -9,10 +9,21 @@ module.exports = {
                 primaryKey: true,
                 type: Sequelize.INTEGER
             },
+            name: {
+                type: Sequelize.STRING(255),
+                allowNull: false
+            },
             login: {
                 type: Sequelize.STRING(255),
                 allowNull: false,
                 unique: true
+            },
+            password: { 
+                type: Sequelize.STRING(255),
+                allowNull: false,
+                validate: {
+                    notEmpty: true
+                }
             },
             recovery_code: {
                 type: Sequelize.STRING(100),
