@@ -51,23 +51,70 @@ npm start
 
 ## API Endpoints
 
+### Основные маршруты
+
 - `GET /` - Проверка работы сервера
-- `GET /api/users` - Получить список пользователей
+
+### Пользователи
+
+- `GET /api/users` - Получить список всех пользователей
 - `GET /api/users/:id` - Получить пользователя по ID
 - `POST /api/users` - Создать нового пользователя
 - `PATCH /api/users/:id` - Обновить пользователя
 - `DELETE /api/users/:id` - Удалить пользователя
-- `GET /api/tasks` - Получить список задач
+
+### Задачи
+
+- `GET /api/tasks` - Получить список всех задач с информацией о пользователях
 - `GET /api/tasks/:id` - Получить задачу по ID
 - `POST /api/tasks` - Создать новую задачу
 - `PATCH /api/tasks/:id` - Обновить задачу
 - `DELETE /api/tasks/:id` - Удалить задачу
+
+### Аутентификация
+
 - `POST /api/auth/register` - Регистрация пользователя
 - `POST /api/auth/login` - Авторизация
 - `POST /api/auth/logout` - Выход
 - `GET /api/auth/me` - Получить информацию о текущем пользователе
 - `POST /api/auth/password/forgot` - Восстановление пароля
 - `POST /api/auth/password/reset` - Сброс пароля
+
+## Примеры использования
+
+### Создание пользователя
+
+```bash
+curl -X POST http://localhost:5000/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"login": "user@example.com"}'
+```
+
+### Создание задачи
+
+```bash
+curl -X POST http://localhost:5000/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Новая задача",
+    "description": "Описание задачи",
+    "status": "new",
+    "userId": 1
+  }'
+```
+
+### Получение всех задач с пользователями
+
+```bash
+curl http://localhost:5000/api/tasks
+```
+
+### Тестирование API
+
+```bash
+npm install axios  # если не установлен
+node test_api.js   # запуск тестов
+```
 
 ## Технологии
 
