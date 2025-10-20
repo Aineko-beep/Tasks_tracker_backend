@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {
     try {
-        // Здесь будет логика вашей авторизации
+        // Здесь будет логика авторизации
         next();
     } catch (error) {
         return res.status(401).json({ message: 'Неавторизованный доступ' });
