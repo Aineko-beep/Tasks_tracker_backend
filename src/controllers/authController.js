@@ -5,7 +5,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change_me';
 
 exports.register = async (req, res) => {
     try {
-        const { login } = req.body;
+        const { login } = req.body || {};
         if (!login) return res.status(400).json({ error: 'Login is required' });
 
         const existingUser = await User.findOne({ where: { login } });
