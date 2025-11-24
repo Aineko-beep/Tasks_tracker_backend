@@ -13,6 +13,25 @@ exports.listTasks = async (req, res) => {
     }
 };
 
+exports.listUserTasks = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const user = await User.findByPk(userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const tasks = await Task.findAll({
+            where: { userId },
+            include: [{ model: User, as: 'user', attributes: ['id', 'login'] }],
+            attributes: ['id', 'title', 'description', 'data', 'status', 'userId', 'created_at', 'updated_at']
+        });
+
+        res.json(tasks);
+    } catch (error) {
+        console.error('Error fetching user tasks:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
 exports.getTask = async (req, res) => {
     try {
         const task = await Task.findByPk(req.params.id, { include: [{ model: User, as: 'user', attributes: ['id', 'login'] }] });

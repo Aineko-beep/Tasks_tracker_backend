@@ -3,8 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const routes = require('./src/routes');
-const sequelize = require('./config/db.config');
+const routes = require('./api/router');
+const sequelize = require('./db/db');
 const app = express();
 const PORT = process.env.PORT || 5000;
 

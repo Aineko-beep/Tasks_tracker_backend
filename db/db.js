@@ -2,7 +2,7 @@
 const { Sequelize } = require('sequelize');
 const path = require('path');
 
-// Попробуем взять конфиг из переменных окружения, иначе — из config/config.json
+// Попробуем взять конфиг из переменных окружения, иначе — из db/config.json
 let dbName = process.env.DB_NAME;
 let dbUser = process.env.DB_USER;
 let dbPassword = process.env.DB_PASSWORD;
@@ -12,7 +12,8 @@ let dbDialect = process.env.DB_DIALECT || 'mysql';
 
 if (!dbName || !dbUser) {
     try {
-        const cfg = require(path.join(__dirname, 'config.json'))[process.env.NODE_ENV || 'development'];
+        const cfgPath = path.join(__dirname, 'config.json');
+        const cfg = require(cfgPath)[process.env.NODE_ENV || 'development'];
         dbName = dbName || cfg.database;
         dbUser = dbUser || cfg.username;
         dbPassword = dbPassword || cfg.password;
@@ -21,7 +22,7 @@ if (!dbName || !dbUser) {
         dbDialect = cfg.dialect || dbDialect;
     } catch (err) {
         // если config.json недоступен, оставляем переменные окружения (возможно undefined)
-        console.warn('config/config.json not found or invalid, using env variables only');
+        console.warn('db/config.json not found or invalid, using env variables only');
     }
 }
 

@@ -6,6 +6,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change_me';
 
 exports.register = async (req, res) => {
     try {
+        console.log('!!!!!!!!!!!', req.body);
+
         const { login, username, password } = req.body || {};
         if (!login || !username || !password) return res.status(400).json({ error: 'Login, username and password are required' });
 
