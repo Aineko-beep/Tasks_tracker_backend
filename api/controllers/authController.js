@@ -2,7 +2,7 @@ const { User } = require('../../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change_me';
+const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
 exports.register = async (req, res) => {
     try {
@@ -48,13 +48,11 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-    // Stateless JWT: logout handled on client side or token blacklist (not implemented)
     res.json({ message: 'User logged out successfully' });
 };
 
 exports.me = async (req, res) => {
     try {
-        // middleware should set req.user
         if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
 
         const user = await User.findByPk(req.user.id);
@@ -78,7 +76,6 @@ exports.passwordForgot = async (req, res) => {
         const recoveryCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         await user.update({ recovery_code: recoveryCode, recovery_data: JSON.stringify({ generated_at: new Date() }) });
 
-        // In production you would send email. For now return the code in response for testing.
         res.json({ message: 'Recovery code sent to your email', recovery_code: recoveryCode });
     } catch (error) {
         console.error('Password recovery error:', error);

@@ -26,7 +26,6 @@ module.exports = {
             }
         ];
 
-        // Remove any existing users with these logins to avoid unique constraint errors
         await queryInterface.bulkDelete('Users', { login: ['admin', 'user1'] }, {});
 
         await queryInterface.bulkInsert('Users', users, {});
