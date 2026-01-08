@@ -1,12 +1,34 @@
 const { User } = require('../../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
+// Email transporter (Yandex)
+const getMailTransporter = () => {
+    const mailUser = process.env.MAIL_USER;
+    const mailPassword = process.env.MAIL_PASSWORD;
+    
+    if (!mailUser || !mailPassword) {
+        console.error('MAIL_USER or MAIL_PASSWORD is not set in environment variables');
+        return null;
+    }
+    
+    return nodemailer.createTransport({
+        host: process.env.MAIL_HOST || 'smtp.yandex.ru',
+        port: Number(process.env.MAIL_PORT) || 465,
+        secure: true,
+        auth: {
+            user: mailUser,
+            pass: mailPassword
+        }
+    });
+};
+
 exports.register = async (req, res) => {
     try {
-        console.log('!!!!!!!!!!!', req.body);
+        console.log('register hit, body:', req.body);
 
         const { login, username, password } = req.body || {};
         if (!login || !username || !password) return res.status(400).json({ error: 'Login, username and password are required' });
@@ -23,6 +45,19 @@ exports.register = async (req, res) => {
         res.status(201).json({ message: 'User registered successfully', user: { id: user.id, login: user.login, username: user.username } });
     } catch (error) {
         console.error('Registration error:', error);
+
+        // Handle Sequelize validation errors
+        if (error.name === 'SequelizeValidationError') {
+            const errors = error.errors.map(err => err.message).join(', ');
+            return res.status(400).json({ error: `Validation error: ${errors}` });
+        }
+
+        // Handle Sequelize unique constraint errors
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            const field = error.errors[0]?.path || 'field';
+            return res.status(400).json({ error: `${field} already exists` });
+        }
+
         res.status(500).json({ error: 'Internal server error' });
     }
 };
@@ -68,15 +103,41 @@ exports.me = async (req, res) => {
 exports.passwordForgot = async (req, res) => {
     try {
         const { login } = req.body;
-        if (!login) return res.status(400).json({ error: 'Login is required' });
+        if (!login) return res.status(400).json({ error: 'Login (email) is required' });
 
         const user = await User.findOne({ where: { login } });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        const recoveryCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-        await user.update({ recovery_code: recoveryCode, recovery_data: JSON.stringify({ generated_at: new Date() }) });
+        // Generate unique token and save in DB
+        const recoveryToken = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+        const recoveryData = { generated_at: new Date().toISOString() };
 
-        res.json({ message: 'Recovery code sent to your email', recovery_code: recoveryCode });
+        await user.update({
+            recovery_code: recoveryToken,
+            recovery_data: JSON.stringify(recoveryData)
+        });
+
+        const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const resetLink = `${frontendBaseUrl}/reset-password?login=${encodeURIComponent(login)}&token=${encodeURIComponent(recoveryToken)}`;
+
+        // Send email with reset link
+        const transporter = getMailTransporter();
+        if (!transporter) {
+            return res.status(500).json({ error: 'Email service is not configured. Please check MAIL_USER and MAIL_PASSWORD in .env file' });
+        }
+
+        await transporter.sendMail({
+            from: process.env.MAIL_FROM || process.env.MAIL_USER || 'shaboha2004@yandex.ru',
+            to: login,
+            subject: 'Восстановление пароля',
+            text: `Вы запросили восстановление пароля.\nПерейдите по ссылке, чтобы сбросить пароль:\n${resetLink}\n\nЕсли вы не запрашивали восстановление, просто игнорируйте это сообщение.`,
+            html: `<p>Вы запросили восстановление пароля.</p>
+                   <p>Перейдите по ссылке, чтобы сбросить пароль:</p>
+                   <p><a href="${resetLink}">${resetLink}</a></p>
+                   <p>Если вы не запрашивали восстановление, просто игнорируйте это сообщение.</p>`
+        });
+
+        res.json({ message: 'Password reset link has been sent to your email' });
     } catch (error) {
         console.error('Password recovery error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -85,16 +146,43 @@ exports.passwordForgot = async (req, res) => {
 
 exports.passwordReset = async (req, res) => {
     try {
-        const { login, recovery_code } = req.body;
-        if (!login || !recovery_code) return res.status(400).json({ error: 'Login and recovery code are required' });
+        const { login, token, new_password } = req.body;
+        if (!login || !token || !new_password) {
+            return res.status(400).json({ error: 'Login, token and new_password are required' });
+        }
 
         const user = await User.findOne({ where: { login } });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        if (user.recovery_code !== recovery_code) return res.status(400).json({ error: 'Invalid recovery code' });
+        if (!user.recovery_code || user.recovery_code !== token) {
+            return res.status(400).json({ error: 'Invalid or expired token' });
+        }
 
-        await user.update({ recovery_code: null, recovery_data: null });
-        res.json({ message: 'Password reset successfully' });
+        // Optional: check token expiration using recovery_data
+        try {
+            const data = user.recovery_data ? JSON.parse(user.recovery_data) : null;
+            if (data && data.generated_at) {
+                const generatedAt = new Date(data.generated_at);
+                const now = new Date();
+                const diffMinutes = (now - generatedAt) / (1000 * 60);
+                const maxMinutes = Number(process.env.RESET_TOKEN_TTL_MINUTES) || 60;
+                if (diffMinutes > maxMinutes) {
+                    return res.status(400).json({ error: 'Token has expired' });
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to parse recovery_data for user', user.id, e);
+        }
+
+        // Update password
+        const hash = bcrypt.hashSync(new_password, 10);
+        await user.update({
+            hashpassword: hash,
+            recovery_code: null,
+            recovery_data: null
+        });
+
+        res.json({ message: 'Password has been reset successfully' });
     } catch (error) {
         console.error('Password reset error:', error);
         res.status(500).json({ error: 'Internal server error' });

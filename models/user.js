@@ -20,10 +20,7 @@ module.exports = (sequelize, DataTypes) => {
         login: {
             type: DataTypes.STRING(255),
             allowNull: false,
-            unique: true,
-            validate: {
-                isEmail: true
-            }
+            unique: true
         },
         username: {
             type: DataTypes.STRING(255),

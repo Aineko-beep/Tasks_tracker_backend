@@ -9,9 +9,20 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
+// Debug: log every incoming request early to see if it reaches the server
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    next();
+});
+
+app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan('dev'));
+
+// Test route to verify server is working
+app.get('/test', (req, res) => {
+    res.json({ message: 'Server is working!', timestamp: new Date().toISOString() });
+});
 
 app.use('/api', routes);
 
@@ -33,6 +44,7 @@ const initDatabase = async () => {
 
         app.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);
+            console.log(`Register endpoint: POST http://localhost:${PORT}/api/auth/register`);
         });
     } catch (error) {
         console.error('Unable to connect to the database:', error);
