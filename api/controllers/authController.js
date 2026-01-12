@@ -5,16 +5,15 @@ const nodemailer = require('nodemailer');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
-// Email transporter (Yandex)
 const getMailTransporter = () => {
     const mailUser = process.env.MAIL_USER;
     const mailPassword = process.env.MAIL_PASSWORD;
-    
+
     if (!mailUser || !mailPassword) {
         console.error('MAIL_USER or MAIL_PASSWORD is not set in environment variables');
         return null;
     }
-    
+
     return nodemailer.createTransport({
         host: process.env.MAIL_HOST || 'smtp.yandex.ru',
         port: Number(process.env.MAIL_PORT) || 465,
@@ -46,13 +45,11 @@ exports.register = async (req, res) => {
     } catch (error) {
         console.error('Registration error:', error);
 
-        // Handle Sequelize validation errors
         if (error.name === 'SequelizeValidationError') {
             const errors = error.errors.map(err => err.message).join(', ');
             return res.status(400).json({ error: `Validation error: ${errors}` });
         }
 
-        // Handle Sequelize unique constraint errors
         if (error.name === 'SequelizeUniqueConstraintError') {
             const field = error.errors[0]?.path || 'field';
             return res.status(400).json({ error: `${field} already exists` });
@@ -108,7 +105,6 @@ exports.passwordForgot = async (req, res) => {
         const user = await User.findOne({ where: { login } });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        // Generate unique token and save in DB
         const recoveryToken = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
         const recoveryData = { generated_at: new Date().toISOString() };
 
@@ -120,7 +116,6 @@ exports.passwordForgot = async (req, res) => {
         const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         const resetLink = `${frontendBaseUrl}/reset-password?login=${encodeURIComponent(login)}&token=${encodeURIComponent(recoveryToken)}`;
 
-        // Send email with reset link
         const transporter = getMailTransporter();
         if (!transporter) {
             return res.status(500).json({ error: 'Email service is not configured. Please check MAIL_USER and MAIL_PASSWORD in .env file' });
@@ -158,7 +153,6 @@ exports.passwordReset = async (req, res) => {
             return res.status(400).json({ error: 'Invalid or expired token' });
         }
 
-        // Optional: check token expiration using recovery_data
         try {
             const data = user.recovery_data ? JSON.parse(user.recovery_data) : null;
             if (data && data.generated_at) {
@@ -174,7 +168,6 @@ exports.passwordReset = async (req, res) => {
             console.warn('Failed to parse recovery_data for user', user.id, e);
         }
 
-        // Update password
         const hash = bcrypt.hashSync(new_password, 10);
         await user.update({
             hashpassword: hash,
